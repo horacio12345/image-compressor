@@ -191,3 +191,18 @@ button {
   border-color: #9ca3af;
   transform: translateY(-1px);
 }
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.setting-group label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  font-weight: normal;
+}

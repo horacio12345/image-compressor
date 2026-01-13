@@ -76,7 +76,7 @@ fn parse_format(format: &str) -> Result<OutputFormat, String> {
 fn parse_privacy(privacy: &str) -> Result<PrivacyLevel, String> {
     match privacy.to_lowercase().as_str() {
         "keep_all" | "todo" => Ok(PrivacyLevel::KeepAll),
-        "remove_sensitive" | "sensible" => Ok(PrivacyLevel::RemoveSensitive),
+        "remove_sensitive" | "sensible" => Ok(PrivacyLevel::RemoveAll),
         "remove_all" | "nada" => Ok(PrivacyLevel::RemoveAll),
         _ => Err(format!("Invalid privacy level: {}", privacy)),
     }
