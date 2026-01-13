@@ -68,7 +68,6 @@ fn parse_format(format: &str) -> Result<OutputFormat, String> {
     match format.to_lowercase().as_str() {
         "jpeg" | "jpg" => Ok(OutputFormat::Jpeg),
         "png" => Ok(OutputFormat::Png),
-        "webp" => Ok(OutputFormat::Webp),
         _ => Err(format!("Invalid format: {}", format)),
     }
 }

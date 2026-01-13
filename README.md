@@ -109,7 +109,7 @@ The compiled application will be available in:
 ## Usage
 
 1. **Launch the application**
-2. **Click the selection zone** to choose images (supports: JPG, JPEG, PNG, GIF, WebP, BMP)
+2. **Click the selection zone** to choose images (supports: JPG, JPEG, PNG, GIF, BMP)
 3. **Configure settings**:
    - Quality: High, Medium, or Low
    - Output Format: JPEG or PNG
@@ -202,7 +202,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Roadmap
 
-- [ ] WebP output format support
 - [ ] Drag & drop file selection
 - [ ] EXIF metadata privacy controls
 - [ ] Batch rename options

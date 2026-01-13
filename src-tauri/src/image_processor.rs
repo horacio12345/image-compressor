@@ -2,8 +2,11 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use rayon::prelude::*;
 use image::{DynamicImage, codecs::jpeg::JpegEncoder};
+use std::fs::File;
+use std::io::BufReader;
 
 use crate::models::{ProcessOptions, ProgressInfo, ImageError, OutputFormat};
+
 
 /// Processes multiple images in parallel
 pub fn process_images(
@@ -44,12 +47,15 @@ fn process_single_image(
     options: &ProcessOptions,
 ) -> Result<(), ImageError> {
     // 1. Load image
-    let img = load_image(input_path)?;
+    let mut img = load_image(input_path)?;
     
-    // 2. Resize if necessary
+    // 2. Apply EXIF orientation BEFORE resizing (critical fix!)
+    img = apply_exif_orientation(input_path, img)?;
+    
+    // 3. Resize if necessary
     let img = resize_if_needed(img, options.width);
     
-    // 3. Convert and compress based on format
+    // 4. Convert and compress based on format (metadata is stripped here)
     let output_path = build_output_path(input_path, options);
     save_image(&img, &output_path, options)?;
     
@@ -69,6 +75,48 @@ fn load_image(path: &Path) -> Result<DynamicImage, ImageError> {
     })
 }
 
+/// Reads EXIF orientation and applies the correct rotation/flip to the image
+/// This fixes images from iPhones and cameras that use EXIF orientation tags
+fn apply_exif_orientation(path: &Path, img: DynamicImage) -> Result<DynamicImage, ImageError> {
+    // Try to read EXIF data
+    let file = match File::open(path) {
+        Ok(f) => f,
+        Err(_) => return Ok(img), // No EXIF, return original
+    };
+    
+    let mut bufreader = BufReader::new(&file);
+    let exifreader = exif::Reader::new();
+    let exif_data = match exifreader.read_from_container(&mut bufreader) {
+        Ok(data) => data,
+        Err(_) => return Ok(img), // No EXIF, return original
+    };
+    
+    // Get orientation tag
+    let orientation = match exif_data.get_field(exif::Tag::Orientation, exif::In::PRIMARY) {
+        Some(field) => match field.value.get_uint(0) {
+            Some(v) => v,
+            None => return Ok(img), // No orientation value
+        },
+        None => return Ok(img), // No orientation tag
+    };
+    
+    // Apply transformation based on EXIF orientation value
+    // https://magnushoff.com/articles/jpeg-orientation/
+    let transformed = match orientation {
+        1 => img, // Normal - no transformation needed
+        2 => img.fliph(), // Flip horizontal
+        3 => img.rotate180(), // Rotate 180
+        4 => img.flipv(), // Flip vertical
+        5 => img.rotate90().fliph(), // Rotate 90 CW and flip horizontal
+        6 => img.rotate90(), // Rotate 90 CW
+        7 => img.rotate270().fliph(), // Rotate 270 CW and flip horizontal
+        8 => img.rotate270(), // Rotate 270 CW (or 90 CCW)
+        _ => img, // Unknown value, return original
+    };
+    
+    Ok(transformed)
+}
+
 /// Resizes image if width is specified (maintaining aspect ratio)
 fn resize_if_needed(img: DynamicImage, target_width: Option<u32>) -> DynamicImage {
     match target_width {
@@ -86,7 +134,6 @@ fn build_output_path(input_path: &Path, options: &ProcessOptions) -> PathBuf {
     let extension = match options.format {
         OutputFormat::Jpeg => "jpg",
         OutputFormat::Png => "png",
-        OutputFormat::Webp => "webp",
     };
     
     options.output_dir.join(format!("{}_compressed.{}", file_stem, extension))
@@ -124,18 +171,30 @@ fn save_image(
             })?;
         }
         OutputFormat::Png => {
-            img.save(output_path).map_err(|e| {
+            use image::codecs::png::{PngEncoder, CompressionType, FilterType as PngFilter};
+    
+            let compression = match quality {
+                90 => CompressionType::Fast,
+                75 => CompressionType::Default,
+                _ => CompressionType::Best, // 60%
+            };
+        
+            let file = std::fs::File::create(output_path).map_err(|e| {
+                ImageError::SaveFailed {
+                    path: output_path.to_string_lossy().to_string(),
+                    reason: e.to_string(),
+                }
+            })?;
+        
+            let encoder = PngEncoder::new_with_quality(file, compression, PngFilter::Adaptive);
+            img.write_with_encoder(encoder).map_err(|e| {
                 ImageError::SaveFailed {
                     path: output_path.to_string_lossy().to_string(),
                     reason: e.to_string(),
                 }
             })?;
         }
-        OutputFormat::Webp => {
-            return Err(ImageError::InternalError {
-                message: "WebP format not supported yet".to_string(),
-            });
-        }
+
     }
     
     Ok(())

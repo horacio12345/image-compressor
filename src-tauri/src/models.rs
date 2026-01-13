@@ -21,7 +21,6 @@ impl QualityPreset {
 pub enum OutputFormat {
     Jpeg,
     Png,
-    Webp,
 }
 
 #[derive(Debug, Clone)]

@@ -22,7 +22,7 @@ dropZone.addEventListener('click', async () => {
         multiple: true,
         filters: [{
           name: 'Images',
-          extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
+          extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp']
         }]
       }
     });
