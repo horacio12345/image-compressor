@@ -4,6 +4,7 @@ use rayon::prelude::*;
 use image::{DynamicImage, codecs::jpeg::JpegEncoder};
 
 use crate::models::{ProcessOptions, ProgressInfo, ImageError, OutputFormat};
+use crate::exif_handler::{self, ExifOrientation};
 
 /// Processes multiple images in parallel
 pub fn process_images(
@@ -43,16 +44,26 @@ fn process_single_image(
     input_path: &Path,
     options: &ProcessOptions,
 ) -> Result<(), ImageError> {
-    // 1. Load image
-    let img = load_image(input_path)?;
-    
-    // 2. Resize if necessary
+    // 1. Read EXIF orientation before loading (if we're removing metadata)
+    let orientation = if matches!(options.privacy, crate::models::PrivacyLevel::RemoveAll) {
+        exif_handler::read_orientation(input_path).unwrap_or_default()
+    } else {
+        ExifOrientation::Horizontal
+    };
+
+    // 2. Load image
+    let mut img = load_image(input_path)?;
+
+    // 3. Apply EXIF orientation transformation (physically rotate the image)
+    img = apply_orientation(img, orientation);
+
+    // 4. Resize if necessary
     let img = resize_if_needed(img, options.width);
-    
-    // 3. Convert and compress based on format
+
+    // 5. Convert and compress based on format
     let output_path = build_output_path(input_path, options);
     save_image(&img, &output_path, options)?;
-    
+
     Ok(())
 }
 
@@ -67,6 +78,34 @@ fn load_image(path: &Path) -> Result<DynamicImage, ImageError> {
     image::open(path).map_err(|_| ImageError::InvalidFormat {
         path: path.to_string_lossy().to_string(),
     })
+}
+
+/// Applies EXIF orientation transformation to the image
+fn apply_orientation(img: DynamicImage, orientation: ExifOrientation) -> DynamicImage {
+    match orientation {
+        ExifOrientation::Horizontal => img,
+        ExifOrientation::MirrorHorizontal => {
+            img.fliph()
+        }
+        ExifOrientation::Rotate180 => {
+            img.rotate180()
+        }
+        ExifOrientation::MirrorVertical => {
+            img.flipv()
+        }
+        ExifOrientation::MirrorHorizontalRotate270CW => {
+            img.fliph().rotate270()
+        }
+        ExifOrientation::Rotate90CW => {
+            img.rotate90()
+        }
+        ExifOrientation::MirrorHorizontalRotate90CW => {
+            img.fliph().rotate90()
+        }
+        ExifOrientation::Rotate270CW => {
+            img.rotate270()
+        }
+    }
 }
 
 /// Resizes image if width is specified (maintaining aspect ratio)

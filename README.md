@@ -7,6 +7,8 @@ A fast, cross-platform desktop application for batch image compression built wit
 - **Batch Processing**: Compress multiple images simultaneously with parallel processing
 - **Multiple Quality Presets**: Choose between High (90%), Medium (75%), or Low (60%) compression
 - **Format Support**: Convert images to JPEG or PNG formats
+- **EXIF Orientation Correction**: Automatically corrects image rotation when removing metadata (perfect for iPhone photos)
+- **Privacy Controls**: Remove all EXIF metadata including GPS, date, and camera information
 - **Smart Resizing**: Optional width-based resizing while maintaining aspect ratio
 - **Fast Performance**: Leverages Rust's performance with Rayon for parallel processing
 - **Cross-Platform**: Works on macOS, Windows, and Linux
@@ -148,6 +150,7 @@ image-compressor/
 - **Backend**: Rust
 - **Framework**: Tauri v2
 - **Image Processing**: `image` crate (v0.25.9)
+- **EXIF Handling**: `kamadak-exif` crate (v0.5)
 - **Parallel Processing**: `rayon` crate (v1.11.0)
 - **Serialization**: `serde` + `serde_json`
 
@@ -204,7 +207,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - [ ] WebP output format support
 - [ ] Drag & drop file selection
-- [ ] EXIF metadata privacy controls
+- [x] EXIF metadata privacy controls (with automatic orientation correction)
 - [ ] Batch rename options
 - [ ] Image preview before/after
 - [ ] Custom compression quality slider
