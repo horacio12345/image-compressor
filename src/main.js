@@ -1,6 +1,5 @@
-// Importar funciones de Tauri v2 usando ES modules
-import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/api/dialog';
+// API de Tauri v2 sin imports
+const invoke = window.__TAURI_INTERNALS__.invoke;
 
 // Variables globales
 let selectedFiles = [];
@@ -14,18 +13,15 @@ const selectDirBtn = document.getElementById('selectDirBtn');
 const outputDirInput = document.getElementById('outputDir');
 const results = document.getElementById('results');
 
-// === EVENTOS (cuando el usuario hace algo) ===
-
-// 1. Click en la zona de drop → abrir selector de archivos
+// Click en zona para seleccionar archivos
 dropZone.addEventListener('click', async () => {
   try {
-    const selected = await open({
+    const selected = await invoke('plugin:dialog|open', {
       multiple: true,
       filters: [{
         name: 'Imágenes',
         extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
-      }],
-      title: 'Selecciona imágenes para comprimir'
+      }]
     });
 
     if (selected) {
@@ -34,18 +30,16 @@ dropZone.addEventListener('click', async () => {
       checkReadyToProcess();
     }
   } catch (error) {
-    console.error('Error al seleccionar archivos:', error);
-    alert('Error al abrir selector: ' + error);
+    console.error('Error:', error);
+    alert('Error: ' + error);
   }
 });
 
-// 2. Click en botón "Elegir carpeta"
+// Click en botón elegir carpeta
 selectDirBtn.addEventListener('click', async () => {
   try {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-      title: 'Selecciona carpeta de salida'
+    const selected = await invoke('plugin:dialog|open', {
+      directory: true
     });
 
     if (selected) {
@@ -54,30 +48,27 @@ selectDirBtn.addEventListener('click', async () => {
       checkReadyToProcess();
     }
   } catch (error) {
-    console.error('Error al seleccionar carpeta:', error);
-    alert('Error al abrir selector de carpeta: ' + error);
+    console.error('Error:', error);
+    alert('Error: ' + error);
   }
 });
 
-// 3. Click en botón "Procesar"
+// Click en procesar
 processBtn.addEventListener('click', async () => {
   if (selectedFiles.length === 0 || !outputDirectory) {
     alert('Selecciona imágenes y carpeta de salida');
     return;
   }
 
-  // Deshabilitar botón mientras procesa
   processBtn.disabled = true;
   processBtn.textContent = 'Procesando...';
 
   try {
-    // Obtener valores de la UI
     const quality = document.querySelector('input[name="quality"]:checked').value;
     const format = document.getElementById('format').value;
     const widthInput = document.getElementById('width').value;
     const width = widthInput ? parseInt(widthInput) : null;
 
-    // === LLAMADA AL BACKEND RUST ===
     const result = await invoke('process_images_command', {
       paths: selectedFiles,
       quality: quality,
@@ -87,20 +78,16 @@ processBtn.addEventListener('click', async () => {
       outputDir: outputDirectory
     });
 
-    // Mostrar resultados
     showResults(result);
 
   } catch (error) {
     alert(`Error al procesar: ${error}`);
     console.error(error);
   } finally {
-    // Rehabilitar botón
     processBtn.disabled = false;
     processBtn.textContent = 'Procesar imágenes';
   }
 });
-
-// === FUNCIONES AUXILIARES ===
 
 function checkReadyToProcess() {
   const ready = selectedFiles.length > 0 && outputDirectory !== '';

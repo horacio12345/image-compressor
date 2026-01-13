@@ -12,52 +12,35 @@
   <div class="container">
     <h1>Image Compressor</h1>
 
-    <!-- Zona de drag & drop -->
     <div id="dropZone" class="drop-zone">
-      <p>Arrastra imágenes aquí o haz click para seleccionar</p>
-      <input type="file" id="fileInput" multiple accept="image/*" hidden>
+      <p>Haz click para seleccionar imágenes</p>
       <p id="fileCount" class="file-count"></p>
     </div>
 
-    <!-- Configuración -->
     <div class="settings">
-      <!-- Calidad -->
       <div class="setting-group">
         <label>Calidad:</label>
         <div class="radio-group">
-          <label>
-            <input type="radio" name="quality" value="high" checked>
-            Alta (90%)
-          </label>
-          <label>
-            <input type="radio" name="quality" value="medium">
-            Media (75%)
-          </label>
-          <label>
-            <input type="radio" name="quality" value="low">
-            Baja (60%)
-          </label>
+          <label><input type="radio" name="quality" value="high" checked> Alta (90%)</label>
+          <label><input type="radio" name="quality" value="medium"> Media (75%)</label>
+          <label><input type="radio" name="quality" value="low"> Baja (60%)</label>
         </div>
       </div>
 
-      <!-- Formato -->
       <div class="setting-group">
         <label for="format">Formato de salida:</label>
         <select id="format">
           <option value="jpeg">JPEG</option>
           <option value="png">PNG</option>
-          <option value="webp">WebP (no implementado)</option>
         </select>
       </div>
 
-      <!-- Width opcional -->
       <div class="setting-group">
         <label for="width">Ancho máximo (opcional):</label>
         <input type="number" id="width" placeholder="Ej: 1920">
         <small>Deja vacío para no redimensionar</small>
       </div>
 
-      <!-- Carpeta de salida -->
       <div class="setting-group">
         <label for="outputDir">Carpeta de salida:</label>
         <input type="text" id="outputDir" placeholder="Selecciona carpeta..." readonly>
@@ -65,10 +48,8 @@
       </div>
     </div>
 
-    <!-- Botón procesar -->
     <button id="processBtn" class="process-btn" disabled>Procesar imágenes</button>
 
-    <!-- Resultados -->
     <div id="results" class="results" hidden>
       <h3>Resultados:</h3>
       <p>Total: <span id="totalCount">0</span></p>
@@ -77,7 +58,94 @@
     </div>
   </div>
 
-  <script type="module" src="main.js"></script>
+  <script type="module">
+    // Importar desde CDN - SIN instalar paquetes localmente
+    import { invoke } from 'https://esm.sh/@tauri-apps/api@2/core';
+    import { open } from 'https://esm.sh/@tauri-apps/api@2/dialog';
+
+    let selectedFiles = [];
+    let outputDirectory = '';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileCount = document.getElementById('fileCount');
+    const processBtn = document.getElementById('processBtn');
+    const selectDirBtn = document.getElementById('selectDirBtn');
+    const outputDirInput = document.getElementById('outputDir');
+    const results = document.getElementById('results');
+
+    dropZone.addEventListener('click', async () => {
+      try {
+        const selected = await open({
+          multiple: true,
+          filters: [{ name: 'Imágenes', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'] }]
+        });
+
+        if (selected) {
+          selectedFiles = Array.isArray(selected) ? selected : [selected];
+          fileCount.textContent = `${selectedFiles.length} imagen(es) seleccionada(s)`;
+          checkReady();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error: ' + error);
+      }
+    });
+
+    selectDirBtn.addEventListener('click', async () => {
+      try {
+        const selected = await open({ directory: true });
+
+        if (selected) {
+          outputDirectory = selected;
+          outputDirInput.value = selected;
+          checkReady();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    });
+
+    processBtn.addEventListener('click', async () => {
+      if (selectedFiles.length === 0 || !outputDirectory) {
+        alert('Selecciona imágenes y carpeta de salida');
+        return;
+      }
+
+      processBtn.disabled = true;
+      processBtn.textContent = 'Procesando...';
+
+      try {
+        const quality = document.querySelector('input[name="quality"]:checked').value;
+        const format = document.getElementById('format').value;
+        const widthInput = document.getElementById('width').value;
+        const width = widthInput ? parseInt(widthInput) : null;
+
+        const result = await invoke('process_images_command', {
+          paths: selectedFiles,
+          quality,
+          format,
+          privacy: 'keep_all',
+          width,
+          outputDir: outputDirectory
+        });
+
+        document.getElementById('totalCount').textContent = result.total_images;
+        document.getElementById('successCount').textContent = result.successful;
+        document.getElementById('failedCount').textContent = result.failed;
+        results.hidden = false;
+
+      } catch (error) {
+        alert(`Error: ${error}`);
+      } finally {
+        processBtn.disabled = false;
+        processBtn.textContent = 'Procesar imágenes';
+      }
+    });
+
+    function checkReady() {
+      processBtn.disabled = !(selectedFiles.length > 0 && outputDirectory);
+    }
+  </script>
 </body>
 
 </html>
