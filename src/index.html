@@ -55,97 +55,11 @@
       <p>Total: <span id="totalCount">0</span></p>
       <p>Exitosas: <span id="successCount">0</span></p>
       <p>Fallidas: <span id="failedCount">0</span></p>
+      <button id="clearBtn" class="clear-btn">Limpiar y procesar nuevas imágenes</button>
     </div>
   </div>
 
-  <script type="module">
-    // Importar desde CDN - SIN instalar paquetes localmente
-    import { invoke } from 'https://esm.sh/@tauri-apps/api@2/core';
-    import { open } from 'https://esm.sh/@tauri-apps/api@2/dialog';
-
-    let selectedFiles = [];
-    let outputDirectory = '';
-
-    const dropZone = document.getElementById('dropZone');
-    const fileCount = document.getElementById('fileCount');
-    const processBtn = document.getElementById('processBtn');
-    const selectDirBtn = document.getElementById('selectDirBtn');
-    const outputDirInput = document.getElementById('outputDir');
-    const results = document.getElementById('results');
-
-    dropZone.addEventListener('click', async () => {
-      try {
-        const selected = await open({
-          multiple: true,
-          filters: [{ name: 'Imágenes', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'] }]
-        });
-
-        if (selected) {
-          selectedFiles = Array.isArray(selected) ? selected : [selected];
-          fileCount.textContent = `${selectedFiles.length} imagen(es) seleccionada(s)`;
-          checkReady();
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error: ' + error);
-      }
-    });
-
-    selectDirBtn.addEventListener('click', async () => {
-      try {
-        const selected = await open({ directory: true });
-
-        if (selected) {
-          outputDirectory = selected;
-          outputDirInput.value = selected;
-          checkReady();
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    });
-
-    processBtn.addEventListener('click', async () => {
-      if (selectedFiles.length === 0 || !outputDirectory) {
-        alert('Selecciona imágenes y carpeta de salida');
-        return;
-      }
-
-      processBtn.disabled = true;
-      processBtn.textContent = 'Procesando...';
-
-      try {
-        const quality = document.querySelector('input[name="quality"]:checked').value;
-        const format = document.getElementById('format').value;
-        const widthInput = document.getElementById('width').value;
-        const width = widthInput ? parseInt(widthInput) : null;
-
-        const result = await invoke('process_images_command', {
-          paths: selectedFiles,
-          quality,
-          format,
-          privacy: 'keep_all',
-          width,
-          outputDir: outputDirectory
-        });
-
-        document.getElementById('totalCount').textContent = result.total_images;
-        document.getElementById('successCount').textContent = result.successful;
-        document.getElementById('failedCount').textContent = result.failed;
-        results.hidden = false;
-
-      } catch (error) {
-        alert(`Error: ${error}`);
-      } finally {
-        processBtn.disabled = false;
-        processBtn.textContent = 'Procesar imágenes';
-      }
-    });
-
-    function checkReady() {
-      processBtn.disabled = !(selectedFiles.length > 0 && outputDirectory);
-    }
-  </script>
+  <script src="main.js"></script>
 </body>
 
 </html>

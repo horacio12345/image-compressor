@@ -12,16 +12,19 @@ const processBtn = document.getElementById('processBtn');
 const selectDirBtn = document.getElementById('selectDirBtn');
 const outputDirInput = document.getElementById('outputDir');
 const results = document.getElementById('results');
+const clearBtn = document.getElementById('clearBtn');
 
 // Click en zona para seleccionar archivos
 dropZone.addEventListener('click', async () => {
   try {
     const selected = await invoke('plugin:dialog|open', {
-      multiple: true,
-      filters: [{
-        name: 'Imágenes',
-        extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
-      }]
+      options: {
+        multiple: true,
+        filters: [{
+          name: 'Imágenes',
+          extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
+        }]
+      }
     });
 
     if (selected) {
@@ -39,7 +42,9 @@ dropZone.addEventListener('click', async () => {
 selectDirBtn.addEventListener('click', async () => {
   try {
     const selected = await invoke('plugin:dialog|open', {
-      directory: true
+      options: {
+        directory: true
+      }
     });
 
     if (selected) {
@@ -87,6 +92,16 @@ processBtn.addEventListener('click', async () => {
     processBtn.disabled = false;
     processBtn.textContent = 'Procesar imágenes';
   }
+});
+
+// Click en limpiar
+clearBtn.addEventListener('click', () => {
+  selectedFiles = [];
+  outputDirectory = '';
+  fileCount.textContent = '';
+  outputDirInput.value = '';
+  results.hidden = true;
+  processBtn.disabled = true;
 });
 
 function checkReadyToProcess() {
