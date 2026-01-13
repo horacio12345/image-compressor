@@ -3,8 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "description": "A fast, cross-platform desktop application for batch image compression",
+  "author": "Your Name",
+  "license": "MIT",
   "scripts": {
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
