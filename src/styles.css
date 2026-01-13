@@ -178,3 +178,20 @@ button {
   font-weight: bold;
   color: #667eea;
 }
+
+/* Botón limpiar */
+.clear-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  border: 2px solid #d1d5db;
+}
+
+.clear-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
