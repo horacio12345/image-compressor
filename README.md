@@ -119,6 +119,22 @@ The compiled application will be available in:
 6. **View results** showing total, successful, and failed conversions
 7. **Click "Clear"** to reset and process new images
 
+## How Quality Settings Work
+
+- **Quality Percentage** (High 90% / Medium 75% / Low 60%):
+  - **JPEG**: Applies lossy compression (lower = smaller file, reduced visual quality)
+    - Note: Converting PNG → JPEG will reduce quality regardless of setting
+    - Quality setting does NOT change image dimensions
+  - **PNG**: Lossless compression (maintains 100% quality from original)
+    - Note: Converting JPEG → PNG won't recover lost quality
+    - To reduce PNG file size, use Maximum Width to decrease dimensions
+
+- **Maximum Width**:
+  - Optional field to reduce image dimensions while maintaining aspect ratio
+  - Leave empty to keep original dimensions
+
+**Tip**: For maximum size reduction, use Low (60%) quality with JPEG format.
+
 ## Project Structure
 
 ```
@@ -148,6 +164,7 @@ image-compressor/
 - **Backend**: Rust
 - **Framework**: Tauri v2
 - **Image Processing**: `image` crate (v0.25.9)
+- **EXIF Handling**: `kamadak-exif` crate (v0.5)
 - **Parallel Processing**: `rayon` crate (v1.11.0)
 - **Serialization**: `serde` + `serde_json`
 
