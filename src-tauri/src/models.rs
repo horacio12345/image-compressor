@@ -27,7 +27,7 @@ pub enum OutputFormat {
 #[derive(Debug, Clone)]
 pub enum PrivacyLevel {
     KeepAll,
-    RemoveSensitive,  // GPS, fecha, cámara
+    RemoveSensitive,  // GPS, date, camera
     RemoveAll,
 }
 

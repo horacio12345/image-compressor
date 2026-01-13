@@ -5,26 +5,26 @@ use image::{DynamicImage, codecs::jpeg::JpegEncoder};
 
 use crate::models::{ProcessOptions, ProgressInfo, ImageError, OutputFormat};
 
-/// Procesa múltiples imágenes en paralelo
+/// Processes multiple images in parallel
 pub fn process_images(
     paths: Vec<PathBuf>,
     options: ProcessOptions,
 ) -> Result<ProgressInfo, ImageError> {
-    // Validación inicial
+    // Initial validation
     if paths.is_empty() {
         return Err(ImageError::InternalError {
             message: "No images provided".to_string(),
         });
     }
 
-    // ProgressInfo compartido entre threads (Arc<Mutex<T>>)
+    // ProgressInfo shared between threads (Arc<Mutex<T>>)
     let progress = Arc::new(Mutex::new(ProgressInfo::new(paths.len())));
     
-    // Procesar en paralelo con Rayon
+    // Process in parallel using Rayon
     paths.par_iter().for_each(|path| {
         let result = process_single_image(path, &options);
         
-        // Actualizar progreso (thread-safe)
+        // Update progress (thread-safe)
         let mut prog = progress.lock().unwrap();
         match result {
             Ok(_) => prog.successful += 1,
@@ -33,30 +33,30 @@ pub fn process_images(
         prog.current_file = Some(path.to_string_lossy().to_string());
     });
 
-    // Retornar resultado final
+    // Return final result
     let final_progress = progress.lock().unwrap().clone();
     Ok(final_progress)
 }
 
-/// Procesa una imagen individual
+/// Processes a single image
 fn process_single_image(
     input_path: &Path,
     options: &ProcessOptions,
 ) -> Result<(), ImageError> {
-    // 1. Cargar imagen
+    // 1. Load image
     let img = load_image(input_path)?;
     
-    // 2. Redimensionar si es necesario
+    // 2. Resize if necessary
     let img = resize_if_needed(img, options.width);
     
-    // 3. Convertir y comprimir según formato
+    // 3. Convert and compress based on format
     let output_path = build_output_path(input_path, options);
     save_image(&img, &output_path, options)?;
     
     Ok(())
 }
 
-/// Carga imagen desde disco
+/// Loads image from disk
 fn load_image(path: &Path) -> Result<DynamicImage, ImageError> {
     if !path.exists() {
         return Err(ImageError::PathNotFound {
@@ -69,7 +69,7 @@ fn load_image(path: &Path) -> Result<DynamicImage, ImageError> {
     })
 }
 
-/// Redimensiona imagen si width está especificado (mantiene aspect ratio)
+/// Resizes image if width is specified (maintaining aspect ratio)
 fn resize_if_needed(img: DynamicImage, target_width: Option<u32>) -> DynamicImage {
     match target_width {
         Some(width) if width < img.width() => {
@@ -80,7 +80,7 @@ fn resize_if_needed(img: DynamicImage, target_width: Option<u32>) -> DynamicImag
     }
 }
 
-/// Construye ruta de salida para imagen procesada
+/// Builds output path for the processed image
 fn build_output_path(input_path: &Path, options: &ProcessOptions) -> PathBuf {
     let file_stem = input_path.file_stem().unwrap().to_string_lossy();
     let extension = match options.format {
@@ -92,7 +92,7 @@ fn build_output_path(input_path: &Path, options: &ProcessOptions) -> PathBuf {
     options.output_dir.join(format!("{}_compressed.{}", file_stem, extension))
 }
 
-/// Guarda imagen con compresión según formato
+/// Saves image with compression according to format
 fn save_image(
     img: &DynamicImage,
     output_path: &Path,

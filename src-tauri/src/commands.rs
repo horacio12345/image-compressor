@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::models::{ProcessOptions, QualityPreset, OutputFormat, PrivacyLevel};
 use crate::image_processor;
 
-/// Comando Tauri: procesar múltiples imágenes
+/// Tauri Command: process multiple images
 #[tauri::command]
 pub fn process_images_command(
     paths: Vec<String>,
@@ -14,16 +14,16 @@ pub fn process_images_command(
     width: Option<u32>,
     output_dir: String,
 ) -> Result<ProgressInfoResponse, String> {
-    // Convertir Strings a PathBuf
+    // Convert Strings to PathBuf
     let image_paths: Vec<PathBuf> = paths.iter().map(|p| PathBuf::from(p)).collect();
     let output_path = PathBuf::from(output_dir);
     
-    // Parsear parámetros desde strings
+    // Parse parameters from strings
     let quality_preset = parse_quality(&quality)?;
     let output_format = parse_format(&format)?;
     let privacy_level = parse_privacy(&privacy)?;
     
-    // Crear opciones
+    // Create options
     let options = ProcessOptions {
         quality: quality_preset,
         format: output_format,
@@ -32,11 +32,11 @@ pub fn process_images_command(
         output_dir: output_path,
     };
     
-    // Procesar imágenes
+    // Process images
     let progress = image_processor::process_images(image_paths, options)
         .map_err(|e| e.to_string())?;
     
-    // Convertir a tipo serializable para Tauri
+    // Convert to serializable type for Tauri
     Ok(ProgressInfoResponse {
         total_images: progress.total_images,
         successful: progress.successful,
@@ -45,7 +45,7 @@ pub fn process_images_command(
     })
 }
 
-/// Tipo serializable para retornar al frontend
+/// Serializable type to return to the frontend
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProgressInfoResponse {
     pub total_images: usize,
@@ -54,7 +54,7 @@ pub struct ProgressInfoResponse {
     pub current_file: Option<String>,
 }
 
-// Funciones helper para parsear strings desde el frontend
+// Helper functions to parse strings from the frontend
 fn parse_quality(quality: &str) -> Result<QualityPreset, String> {
     match quality.to_lowercase().as_str() {
         "high" | "alta" => Ok(QualityPreset::High),

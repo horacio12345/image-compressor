@@ -1,11 +1,11 @@
-// API de Tauri v2 sin imports
+// Tauri v2 API without imports
 const invoke = window.__TAURI_INTERNALS__.invoke;
 
-// Variables globales
+// Global variables
 let selectedFiles = [];
 let outputDirectory = '';
 
-// Referencias a elementos HTML
+// HTML element references
 const dropZone = document.getElementById('dropZone');
 const fileCount = document.getElementById('fileCount');
 const processBtn = document.getElementById('processBtn');
@@ -14,14 +14,14 @@ const outputDirInput = document.getElementById('outputDir');
 const results = document.getElementById('results');
 const clearBtn = document.getElementById('clearBtn');
 
-// Click en zona para seleccionar archivos
+// Click on zone to select files
 dropZone.addEventListener('click', async () => {
   try {
     const selected = await invoke('plugin:dialog|open', {
       options: {
         multiple: true,
         filters: [{
-          name: 'Imágenes',
+          name: 'Images',
           extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
         }]
       }
@@ -29,7 +29,7 @@ dropZone.addEventListener('click', async () => {
 
     if (selected) {
       selectedFiles = Array.isArray(selected) ? selected : [selected];
-      fileCount.textContent = `${selectedFiles.length} imagen(es) seleccionada(s)`;
+      fileCount.textContent = `${selectedFiles.length} image(s) selected`;
       checkReadyToProcess();
     }
   } catch (error) {
@@ -38,7 +38,7 @@ dropZone.addEventListener('click', async () => {
   }
 });
 
-// Click en botón elegir carpeta
+// Click on select folder button
 selectDirBtn.addEventListener('click', async () => {
   try {
     const selected = await invoke('plugin:dialog|open', {
@@ -58,15 +58,15 @@ selectDirBtn.addEventListener('click', async () => {
   }
 });
 
-// Click en procesar
+// Click on process button
 processBtn.addEventListener('click', async () => {
   if (selectedFiles.length === 0 || !outputDirectory) {
-    alert('Selecciona imágenes y carpeta de salida');
+    alert('Select images and output folder');
     return;
   }
 
   processBtn.disabled = true;
-  processBtn.textContent = 'Procesando...';
+  processBtn.textContent = 'Processing...';
 
   try {
     const quality = document.querySelector('input[name="quality"]:checked').value;
@@ -86,15 +86,15 @@ processBtn.addEventListener('click', async () => {
     showResults(result);
 
   } catch (error) {
-    alert(`Error al procesar: ${error}`);
+    alert(`Processing error: ${error}`);
     console.error(error);
   } finally {
     processBtn.disabled = false;
-    processBtn.textContent = 'Procesar imágenes';
+    processBtn.textContent = 'Process Images';
   }
 });
 
-// Click en limpiar
+// Click on clear button
 clearBtn.addEventListener('click', () => {
   selectedFiles = [];
   outputDirectory = '';

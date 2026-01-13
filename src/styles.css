@@ -30,7 +30,7 @@ h1 {
   font-size: 28px;
 }
 
-/* Zona de drag & drop */
+/* Drag & drop zone */
 .drop-zone {
   border: 3px dashed #667eea;
   border-radius: 8px;
@@ -59,7 +59,7 @@ h1 {
   color: #667eea;
 }
 
-/* Configuración */
+/* Configuration */
 .settings {
   display: flex;
   flex-direction: column;
@@ -133,7 +133,7 @@ button {
   background: #5568d3;
 }
 
-/* Botón procesar */
+/* Process button */
 .process-btn {
   width: 100%;
   padding: 16px;
@@ -155,7 +155,7 @@ button {
   cursor: not-allowed;
 }
 
-/* Resultados */
+/* Results */
 .results {
   margin-top: 30px;
   padding: 20px;
@@ -179,7 +179,7 @@ button {
   color: #667eea;
 }
 
-/* Botón limpiar */
+/* Clear button */
 .clear-btn {
   width: 100%;
   margin-top: 16px;
