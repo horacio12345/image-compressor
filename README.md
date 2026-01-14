@@ -8,9 +8,40 @@ A fast, cross-platform desktop application for batch image compression built wit
 - **Multiple Quality Presets**: Choose between High (90%), Medium (75%), or Low (60%) compression
 - **Format Support**: Convert images to JPEG or PNG formats
 - **Smart Resizing**: Optional width-based resizing while maintaining aspect ratio
+- **EXIF Orientation Handling**: Automatically corrects image orientation from camera metadata
+- **Automatic Privacy Protection**: All EXIF metadata is automatically removed during compression
 - **Fast Performance**: Leverages Rust's performance with Rayon for parallel processing
 - **Cross-Platform**: Works on macOS, Windows, and Linux
 - **Clean UI**: Simple, intuitive interface with real-time progress feedback
+
+## How It Works
+
+### Image Processing Pipeline
+
+1. **Load Image**: Reads the image file from disk
+2. **Apply EXIF Orientation**: Automatically rotates/flips images based on EXIF orientation tag (fixes photos from iPhones and cameras)
+3. **Resize (Optional)**: Reduces image dimensions while maintaining aspect ratio if maximum width is specified
+4. **Compress & Save**: Converts to selected format with chosen quality level
+5. **Privacy Protection**: All EXIF metadata is automatically stripped during the save process
+
+### Quality Settings Explained
+
+- **Quality Percentage** (High 90% / Medium 75% / Low 60%):
+  - **JPEG**: Applies lossy compression (lower = smaller file, reduced visual quality)
+    - Note: Converting PNG → JPEG will reduce quality regardless of setting
+    - Quality setting does NOT change image dimensions
+  - **PNG**: Uses lossless compression with different compression levels
+    - High (90%): Fast compression
+    - Medium (75%): Default compression
+    - Low (60%): Best compression (slower but smaller files)
+    - Note: Converting JPEG → PNG won't recover lost quality
+
+- **Maximum Width**:
+  - Optional field to reduce image dimensions while maintaining aspect ratio
+  - Leave empty to keep original dimensions
+  - Only resizes if the original width is larger than specified value
+
+**Tip**: For maximum size reduction, use Low (60%) quality with JPEG format and specify a maximum width.
 
 ## Prerequisites
 
@@ -119,22 +150,6 @@ The compiled application will be available in:
 6. **View results** showing total, successful, and failed conversions
 7. **Click "Clear"** to reset and process new images
 
-## How Quality Settings Work
-
-- **Quality Percentage** (High 90% / Medium 75% / Low 60%):
-  - **JPEG**: Applies lossy compression (lower = smaller file, reduced visual quality)
-    - Note: Converting PNG → JPEG will reduce quality regardless of setting
-    - Quality setting does NOT change image dimensions
-  - **PNG**: Lossless compression (maintains 100% quality from original)
-    - Note: Converting JPEG → PNG won't recover lost quality
-    - To reduce PNG file size, use Maximum Width to decrease dimensions
-
-- **Maximum Width**:
-  - Optional field to reduce image dimensions while maintaining aspect ratio
-  - Leave empty to keep original dimensions
-
-**Tip**: For maximum size reduction, use Low (60%) quality with JPEG format.
-
 ## Project Structure
 
 ```
@@ -147,13 +162,13 @@ image-compressor/
 │   ├── src/
 │   │   ├── main.rs             # Tauri entry point
 │   │   ├── lib.rs              # Library exports
-│   │   ├── commands.rs         # Tauri commands
-│   │   ├── image_processor.rs  # Image processing logic
-│   │   └── models.rs           # Data models
+│   │   ├── commands.rs         # Tauri commands (frontend/backend bridge)
+│   │   ├── image_processor.rs  # Core image processing logic
+│   │   └── models.rs           # Data structures and types
 │   ├── capabilities/
-│   │   └── default.json        # Tauri permissions
+│   │   └── default.json        # Tauri permissions configuration
 │   ├── Cargo.toml              # Rust dependencies
-│   └── tauri.conf.json         # Tauri configuration
+│   └── tauri.conf.json         # Tauri application configuration
 ├── package.json                 # Node.js dependencies
 └── README.md                    # This file
 ```
@@ -164,9 +179,33 @@ image-compressor/
 - **Backend**: Rust
 - **Framework**: Tauri v2
 - **Image Processing**: `image` crate (v0.25.9)
-- **EXIF Handling**: `kamadak-exif` crate (v0.5)
+- **EXIF Handling**: `kamadak-exif` crate (v0.5) - reads EXIF orientation before processing, metadata automatically removed on save
 - **Parallel Processing**: `rayon` crate (v1.11.0)
 - **Serialization**: `serde` + `serde_json`
+
+## Technical Details
+
+### EXIF Metadata Handling
+
+The application handles EXIF metadata in two separate phases:
+
+1. **Reading Phase (requires `kamadak-exif` dependency)**:
+   - Before processing, the app reads EXIF orientation tags from the original image
+   - Automatically rotates/flips images based on orientation values (1-8)
+   - This fixes photos from iPhones/cameras that store rotation in metadata instead of actually rotating pixels
+
+2. **Writing Phase (automatic, no special dependency needed)**:
+   - When saving the processed image, the encoder creates a completely new image file
+   - This new file contains ONLY the pixel data - no EXIF metadata is carried over
+   - ALL metadata is automatically stripped: GPS location, camera model, date taken, orientation tags, etc.
+   - This happens automatically because we're creating new image files, not modifying the originals
+
+**Why both are needed**: We need to READ the orientation tag to fix rotated photos, but then we CREATE a new file which naturally has no metadata. The `kamadak-exif` crate is only used for reading the orientation before processing.
+
+### Compression Methods
+
+- **JPEG**: Uses lossy compression with quality settings (60-90%). Creates smaller files by discarding some image data.
+- **PNG**: Uses lossless compression with three compression levels (Fast/Default/Best). File size reduction depends more on image content and maximum width setting.
 
 ## Troubleshooting
 
@@ -176,17 +215,26 @@ image-compressor/
 
 - **Solution**: Ensure `@tauri-apps/cli` is installed: `npm install`
 
+**Issue**: Rust compilation errors about `unresolved module or unlinked crate 'exif'`
+
+- **Solution**: Add the missing dependency: `cd src-tauri && cargo add kamadak-exif`
+- This is required for EXIF orientation correction
+
 **Issue**: Rust compilation errors
 
 - **Solution**: Update Rust to the latest version: `rustup update`
 
 **Issue**: Images fail to process
 
-- **Solution**: Ensure output directory has write permissions
+- **Solution**: Ensure output directory has write permissions and verify images are in supported formats
 
 **Issue**: Application won't start on Linux
 
 - **Solution**: Install missing system dependencies (see Prerequisites)
+
+**Issue**: Images appear rotated incorrectly
+
+- **Solution**: Ensure `kamadak-exif` dependency is installed (see compilation error solution above)
 
 ### Getting Help
 
@@ -194,13 +242,14 @@ If you encounter issues:
 
 1. Check the [Tauri documentation](https://tauri.app/)
 2. Review the console logs in development mode
-3. Open an issue on GitHub with error details
+3. Open an issue on GitHub with error details and sample images (if applicable)
 
 ## Performance
 
 - **Parallel Processing**: Utilizes all available CPU cores via Rayon
-- **Memory Efficient**: Processes images in batches without loading all into memory
+- **Memory Efficient**: Processes images in batches without loading all into memory simultaneously
 - **Fast Compression**: Rust-based processing is significantly faster than JavaScript alternatives
+- **Optimized for Batch Operations**: Processes multiple images concurrently for maximum throughput
 
 ## License
 
@@ -220,7 +269,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Roadmap
 
 - [ ] Drag & drop file selection
-- [ ] EXIF metadata privacy controls
 - [ ] Batch rename options
-- [ ] Image preview before/after
-- [ ] Custom compression quality slider
+- [ ] Image preview before/after comparison
+- [ ] Custom compression quality slider (beyond presets)
+- [ ] Support for additional output formats (WebP, AVIF)
+- [ ] Preserve original file timestamps
