@@ -206,3 +206,23 @@ input[type="checkbox"] {
   cursor: pointer;
   font-weight: normal;
 }
+
+.info-box {
+  background: #e8f4fd;
+  border-left: 4px solid #2196F3;
+  padding: 15px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.info-box strong {
+  display: block;
+  color: #1976D2;
+  margin-bottom: 5px;
+}
+
+.info-box p {
+  margin: 0;
+  color: #555;
+  font-size: 14px;
+}

@@ -78,7 +78,6 @@ processBtn.addEventListener('click', async () => {
       paths: selectedFiles,
       quality: quality,
       format: format,
-      privacy: document.getElementById('removeMetadata').checked ? 'remove_all' : 'keep_all',
       width: width,
       outputDir: outputDirectory
     });
