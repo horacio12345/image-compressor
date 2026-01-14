@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
-use crate::models::{ProcessOptions, QualityPreset, OutputFormat, PrivacyLevel};
+use crate::models::{ProcessOptions, QualityPreset, OutputFormat};
 use crate::image_processor;
 
 /// Tauri Command: process multiple images
@@ -10,7 +10,6 @@ pub fn process_images_command(
     paths: Vec<String>,
     quality: String,
     format: String,
-    privacy: String,
     width: Option<u32>,
     output_dir: String,
 ) -> Result<ProgressInfoResponse, String> {
@@ -21,13 +20,11 @@ pub fn process_images_command(
     // Parse parameters from strings
     let quality_preset = parse_quality(&quality)?;
     let output_format = parse_format(&format)?;
-    let privacy_level = parse_privacy(&privacy)?;
     
     // Create options
     let options = ProcessOptions {
         quality: quality_preset,
         format: output_format,
-        privacy: privacy_level,
         width,
         output_dir: output_path,
     };
@@ -69,14 +66,5 @@ fn parse_format(format: &str) -> Result<OutputFormat, String> {
         "jpeg" | "jpg" => Ok(OutputFormat::Jpeg),
         "png" => Ok(OutputFormat::Png),
         _ => Err(format!("Invalid format: {}", format)),
-    }
-}
-
-fn parse_privacy(privacy: &str) -> Result<PrivacyLevel, String> {
-    match privacy.to_lowercase().as_str() {
-        "keep_all" | "todo" => Ok(PrivacyLevel::KeepAll),
-        "remove_sensitive" | "sensible" => Ok(PrivacyLevel::RemoveAll),
-        "remove_all" | "nada" => Ok(PrivacyLevel::RemoveAll),
-        _ => Err(format!("Invalid privacy level: {}", privacy)),
     }
 }

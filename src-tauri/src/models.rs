@@ -23,12 +23,6 @@ pub enum OutputFormat {
     Png,
 }
 
-#[derive(Debug, Clone)]
-pub enum PrivacyLevel {
-    KeepAll,
-    RemoveAll,
-}
-
 #[derive(Debug)]
 pub enum ImageError {
     PathNotFound { path: String },
@@ -64,7 +58,6 @@ impl std::error::Error for ImageError {}
 pub struct ProcessOptions {
     pub quality: QualityPreset,
     pub format: OutputFormat,
-    pub privacy: PrivacyLevel,
     pub width: Option<u32>,
     pub output_dir: PathBuf,
 }
