@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub enum QualityPreset {
-    High,    // 90%
-    Medium,  // 75%
-    Low,     // 60%
+    High,   // 90%
+    Medium, // 75%
+    Low,    // 60%
 }
 
 impl QualityPreset {
@@ -25,29 +25,47 @@ pub enum OutputFormat {
 
 #[derive(Debug)]
 pub enum ImageError {
-    PathNotFound { path: String },
-    InvalidFormat { path: String },
-    ExifReadError { path: String, details: String },
-    SaveFailed { path: String, reason: String },
-    InvalidDimensions { width: u32, height: u32, reason: String },
-    InternalError { message: String },
+    PathNotFound {
+        path: String,
+    },
+    InvalidFormat {
+        path: String,
+    },
+    ExifReadError {
+        path: String,
+        details: String,
+    },
+    SaveFailed {
+        path: String,
+        reason: String,
+    },
+    InvalidDimensions {
+        width: u32,
+        height: u32,
+        reason: String,
+    },
+    InternalError {
+        message: String,
+    },
 }
 
 impl std::fmt::Display for ImageError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            ImageError::PathNotFound { path } => 
-                write!(f, "Path not found: {}", path),
-            ImageError::InvalidFormat { path } => 
-                write!(f, "Invalid format: {}", path),
-            ImageError::ExifReadError { path, details } => 
-                write!(f, "EXIF read error in {}: {}", path, details),
-            ImageError::SaveFailed { path, reason } => 
-                write!(f, "Save failed for {}: {}", path, reason),
-            ImageError::InvalidDimensions { width, height, reason } => 
-                write!(f, "Invalid dimensions {}x{}: {}", width, height, reason),
-            ImageError::InternalError { message } => 
-                write!(f, "Internal error: {}", message),
+            ImageError::PathNotFound { path } => write!(f, "Path not found: {}", path),
+            ImageError::InvalidFormat { path } => write!(f, "Invalid format: {}", path),
+            ImageError::ExifReadError { path, details } => {
+                write!(f, "EXIF read error in {}: {}", path, details)
+            }
+            ImageError::SaveFailed { path, reason } => {
+                write!(f, "Save failed for {}: {}", path, reason)
+            }
+            ImageError::InvalidDimensions {
+                width,
+                height,
+                reason,
+            } => write!(f, "Invalid dimensions {}x{}: {}", width, height, reason),
+            ImageError::InternalError { message } => write!(f, "Internal error: {}", message),
         }
     }
 }

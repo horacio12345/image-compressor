@@ -1,8 +1,8 @@
-use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
-use crate::models::{ProcessOptions, QualityPreset, OutputFormat};
 use crate::image_processor;
+use crate::models::{OutputFormat, ProcessOptions, QualityPreset};
 
 /// Tauri Command: process multiple images
 #[tauri::command]
@@ -16,11 +16,11 @@ pub fn process_images_command(
     // Convert Strings to PathBuf
     let image_paths: Vec<PathBuf> = paths.iter().map(|p| PathBuf::from(p)).collect();
     let output_path = PathBuf::from(output_dir);
-    
+
     // Parse parameters from strings
     let quality_preset = parse_quality(&quality)?;
     let output_format = parse_format(&format)?;
-    
+
     // Create options
     let options = ProcessOptions {
         quality: quality_preset,
@@ -28,11 +28,11 @@ pub fn process_images_command(
         width,
         output_dir: output_path,
     };
-    
+
     // Process images
-    let progress = image_processor::process_images(image_paths, options)
-        .map_err(|e| e.to_string())?;
-    
+    let progress =
+        image_processor::process_images(image_paths, options).map_err(|e| e.to_string())?;
+
     // Convert to serializable type for Tauri
     Ok(ProgressInfoResponse {
         total_images: progress.total_images,
