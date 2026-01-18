@@ -14,7 +14,7 @@ pub fn process_images_command(
     output_dir: String,
 ) -> Result<ProgressInfoResponse, String> {
     // Convert Strings to PathBuf
-    let image_paths: Vec<PathBuf> = paths.iter().map(|p| PathBuf::from(p)).collect();
+    let image_paths: Vec<PathBuf> = paths.iter().map(PathBuf::from).collect();
     let output_path = PathBuf::from(output_dir);
 
     // Parse parameters from strings
